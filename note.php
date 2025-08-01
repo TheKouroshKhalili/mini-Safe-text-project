@@ -21,9 +21,7 @@ function generateSecurePassword(int $length = 50): string {
     $stmt = $pdo->prepare('SELECT * FROM notes WHERE note_key = ? LIMIT 1');
     $stmt->execute([$note_key]);
     $note = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$note) { 
-        $note = ['password' => generateSecurePassword()];
-    }
+ 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!isset($_POST['csrf_token'], $_SESSION['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
@@ -31,8 +29,11 @@ function generateSecurePassword(int $length = 50): string {
                 $show_password_form = true;
             } else {
                 $input_password = trim($_POST['password'] ?? '');
-                if ($input_password === '' || $input_password !== $note['password']) {
+                if (!$note || $input_password === '' || $input_password !== $note['password']) {
                     $error = 'رمز عبور اشتباه است';
+                    $show_password_form = true;
+                }elseif ( $note['expires_at'] < date('Y-m-d H:i:s', time())) {
+                      $error = 'تایم تموم شده';
                     $show_password_form = true;
                 } else {
 
